@@ -1,25 +1,25 @@
-import requests
+from enum import Enum
 from src.config import Config
+from .search_engines import BingSearch , DuckDuckGoSearch
 
-class BingSearch:
+
+class SearchEngine(Enum):
+    BING = BingSearch()
+    DUCKDUCKGO = DuckDuckGoSearch()
+
+
+class WebSearch:
     def __init__(self):
         self.config = Config()
-        self.bing_api_key = self.config.get_bing_api_key()
-        self.bing_api_endpoint = self.config.get_bing_api_endpoint()
+        self.search_engine = self.load_search_engine()
         self.query_result = None
+        
+    def load_search_engine(self):
+        return SearchEngine[self.config.get_search_engine_type()].value
 
     def search(self, query):
-        headers = {"Ocp-Apim-Subscription-Key": self.bing_api_key}
-        params = {"q": query, "mkt": "en-US"}
-
-        try:
-            response = requests.get(self.bing_api_endpoint, headers=headers, params=params)
-            response.raise_for_status()
-            self.query_result = response.json()
-            return self.query_result
-        except Exception as err:
-            return err
+        self.query_result = self.search_engine.search(query)
+        return self.query_result
 
     def get_first_link(self):
-        return self.query_result["webPages"]["value"][0]["url"]
-
+        return self.search_engine.get_first_link()
